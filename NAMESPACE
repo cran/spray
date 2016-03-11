@@ -1,0 +1,20 @@
+useDynLib(spray)
+exportPattern("^[[:alpha:]]+")
+
+importFrom(Rcpp, evalCpp)
+importFrom(magic,adiag)
+importFrom(partitions,compositions)
+
+import(methods)
+
+export(spray_add)
+
+S3method("[", spray)
+S3method("[<-", spray)
+S3method(dim,spray)
+S3method(as.array,spray)
+S3method(as.function,spray)
+S3method(print,spray)
+S3method(Ops,spray)
+S3method(asum,spray)
+S3method(deriv,spray)

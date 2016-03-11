@@ -1,0 +1,320 @@
+% -*- mode: noweb; noweb-default-code-mode: R-mode; -*-
+\documentclass[nojss]{jss}
+\usepackage{dsfont}
+\usepackage{bbm}
+\usepackage{amsfonts}
+\usepackage{wasysym}
+\usepackage{amssymb}
+
+%\title{Programmers' Niche: Efficient Multivariate polynomials in \R}
+%\subtitle{The \pkg{spray} package}
+%\author{Robin K. S. Hankin}
+%\maketitle
+
+
+\author{Robin K. S. Hankin\\Auckland University of Technology}
+\title{Multivariate polynomials in \proglang{R}}
+%\VignetteIndexEntry{A vignette for the spray package}
+%% for pretty printing and a nice hypersummary also set:
+\Plainauthor{Robin K. S. Hankin}
+\Plaintitle{Sparse arrays and multivariate polynomials in R}
+\Shorttitle{Sparse arrays and multivariate polynomials in \proglang{R}}
+
+%% an abstract and keywords
+\Abstract{
+In this short article I introduce the \pkg{spray} package, which
+provides some functionality for handling sparse multivariate polynomials; the
+package is discussed here from a programming perspective.  An example
+from the field of enumerative combinatorics is presented.
+}
+
+\Keywords{Multivariate polynomials, \proglang{R}}
+\Plainkeywords{Multivariate polynomials, R}
+
+%% publication information
+%% NOTE: This needs to filled out ONLY IF THE PAPER WAS ACCEPTED.
+%% If it was not (yet) accepted, leave them commented.
+%% \Volume{13}
+%% \Issue{9}
+%% \Month{September}
+%% \Year{2004}
+%% \Submitdate{2004-09-29}
+%% \Acceptdate{2004-09-29}
+
+%% The address of (at least) one author should be given
+%% in the following format:
+\Address{
+  Robin K. S. Hankin\\
+  Auckland University of Technology\\
+  New Zealand
+}
+%% It is also possible to add a telephone and fax number
+%% before the e-mail in the following format:
+%% Telephone: +43/1/31336-5053
+%% Fax: +43/1/31336-734
+
+%% for those who use Sweave please include the following line (with % symbols):
+%% need no \usepackage{Sweave.sty}
+
+%% end of declarations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<setup,echo=FALSE,print=FALSE>>=
+ignore <- require(spray)
+@ 
+
+
+\SweaveOpts{}
+\begin{document}
+
+
+\section{Introduction}
+
+The \pkg{multipol} package~\citep{Rnews:Hankin:2008} furnishes the
+\proglang{R} programming language with functionality for multivariate
+polynomials.  However, the \pkg{multipol} package was noted as being
+inefficient in many common cases: the package stores multivariate
+polynomials as arrays and this often involves storing many zero
+elements which consume computational and memory resources
+unnecessarily.
+
+One suggestion was to use sparse arrays---in which nonzero elements
+are stored along with an index vector describing their
+coordinates---instead of arrays.  In this short document I introduce
+the \pkg{spray} package which provides functionality for sparse arrays
+and interprets them as multivariate polynomials.
+
+\subsection{Existing work}
+
+The~\pkg{slam} package~\citep{hornik2014} provides some sparse array
+functionality but is not intended to interpret arbitrary dimensional
+sparse arrays as multivariate polynomials.  The
+\pkg{mpoly}~\citep{kahle2013} package handles multivariate polynomials but
+does not accept negative powers, nor is it designed for efficiently
+processing large multivariate polynomials; I present some timings
+below.  The \pkg{mpoly} package is different in philosophy from both
+the~\pkg{spray} package and~\pkg{multipol} in that~\pkg{mpoly} is more
+``symbolic'' in the sense that it admits---and handles
+appropriately---named variables, whereas my packages do not make any
+reference to the {\em names} of the variables.  As Kahle points out,
+naming the variables allows a richer and more natural suite of
+functionality; straightforward \pkg{mpoly} idiom is somewhat strained
+in \pkg{spray}.
+
+\section{Package philosophy}
+
+The \pkg{spray} package does not interact or depend on \pkg{multipol}
+in any way, owing to the very different design philosophies used.  The
+package uses the~\proglang{C++} Standard Template Library's
+\proglang{map} class to store and retrieve elements.
+
+A {\em map} is an associative container that stores values indexed by
+a key, which is used to sort and uniquely identify the values.
+In the package, the key is a \proglang{vector} object or a
+\proglang{deque} object with (signed) integer elements.
+
+\subsection{Compile-time options}
+
+At compile time, the package offers two options.  Firstly one may use
+the \proglang{unordered\_map} class in place of the \proglang{map}
+class.  This option is provided in the interests of efficiency.  An
+unordered map has lookup time~${\mathcal O}(1)$ (compare~${\mathcal
+  O}(\log n)$ for the map class), but overhead is higher.
+
+The other option offered is the nature of the key, which may be either
+\proglang{vector} class or \proglang{deque} class.  Elements of a
+\proglang{vector} are guaranteed to be contiguous in memory, unlike a
+\proglang{deque}.  This does not appear to make a huge difference to
+timings, but the default (\proglang{unordered\_map} indexed by a
+\proglang{vector}) appears to be marginally the fastest option.
+
+
+
+\section{The package in use}
+
+
+To create a sparse array object, one specifies a matrix of indices
+\code{M} with each row corresponding to the position of a nonzero
+element, and a numeric vector of values:
+
+<<define_S>>=
+library("spray")
+M <- matrix(c(0,0,0,1,0,0,1,1,1,2,0,3),ncol=3)
+M
+S1 <- spray(M, 1:4)
+S1
+@ 
+
+Thus \code{S1[0,0,2] = 2}.  Note that the representation of the spray
+object does not preserve the order of the index rows in the argument,
+although a particular index row is associated unambiguously with a
+unique numeric value.  Replace methods work as expected:
+  
+<<use_set_method_S>>=
+S1[diag(3)] <- -3
+S1
+@   
+
+Note that a value with an existing index is overwritten, while new
+elements are created as necessary.  Addition is implemented:
+
+<<define_S1>>=
+S2 <- spray(matrix(c(6,0,1,7,0,1,8,2,3),nrow=3), c(17,11,-4))
+S2
+S1+S2
+@ 
+
+Note that element~\code{[0,0,2]} becomes $2+11=13$, while
+element~\code{[1,1,3]} vanishes.
+
+
+\subsubsection{Repeated index rows}
+
+If any row of the index matrix is identical to any other row, then
+this is interpreted as an error.  However, on occasion, the user may
+wish to sum values over repeated index rows and this is done by
+setting the \code{addrepeats} argument to \code{TRUE}:
+
+<<demonstrate_addrepeats>>=
+spray(matrix(0:5,8,3),addrepeats=TRUE)
+@ 
+
+\section{Sparse arrays interpreted as multivariate polynomials}
+
+One natural and useful interpretation of a sparse array is as a multivariate polynomial:
+
+<<show_a_multivariate_polynomial>>=
+options(polyform=TRUE)
+S1
+@ 
+
+(only the print method has changed; \code{S1} is as before).
+
+<<exhibit.multiplication>>=
+S1*S2
+@ 
+
+It is possible to introduce an element of symbolic calculation,
+exhibiting familiar algebraic identities:
+
+<<symbolic>>=
+
+x <- lone(1,2)
+y <- lone(2,2)
+(x+y)^3
+(1+x+y)^3
+@ 
+
+
+\subsection{Further functionality}
+
+Negative indices have a natural intrerpretation as multivariate polynomials:
+  
+<<exhibit.negative.indices>>=
+S1[0,-1,-2] <- 1
+S1
+@   
+
+And multivariate polynomials have a natural interpretation as functions:
+  
+<<exhibit.function.coercion>>=
+f <- as.function(S1)
+f(matrix(1:9,3,3))
+@ 
+
+The package also includes the ability to sum across one or more dimensions:
+  
+<<exhibit_asum>>=
+asum(S1,2)
+@   
+
+
+
+Other algebraic operations include substitution and partial
+differentiation.  Consider the homogenous polynomial in three
+variables; to substitute $y=1.5$ into this, we use the \code{subs()}
+function:
+    
+<<substitute_show>>=
+options(polyform=TRUE)
+homog(3,3)
+subs(homog(3,3),dims=2,1.5)
+@   
+
+\section{An example}
+
+Suppose we consider a chess knight and ask how many ways are there for
+the knight to return to its starting square in 6 moves.  Such
+questions are most naturally answered by using generating functions.
+We define \code{chess\_knight}, a spray object with rows corresponding
+to the possible moves the chess piece may make:
+  
+<<knight_generating_function>>=
+chess_knight <- 
+  spray(matrix(
+      c(1,2,1,-2,-1,2,-1,-2,2,1,2,-1,-2,1,-2,-1),
+      byrow=TRUE,ncol=2))
+options(polyform=FALSE)
+chess_knight
+@ 
+
+Then \code{chess\_knight[i,j]} gives the number of ways the piece can
+move from square~\code{[0,0]} to~\code{[i,j]};
+and~\code{(chess\_knight\^{}n)[i,j]} gives the number of ways the
+piece can reach~\code{[i,j]} in \code{n} moves.  To calculate the
+number of ways that the piece can return to its starting square we
+simply raise \code{chess\_knight} to the sixth power and extract
+the \code{[0,0]} coefficient:
+<<knight_six_moves>>=
+constant(chess_knight^6,drop=TRUE)
+@   
+
+(function \code{constant()} extracts the coefficient corresponding to
+zero power).  One natural generalization would be to arbitrary
+dimensions.  A d-dimensional knight moves two squares in one
+direction, followed by one square in another direction:
+
+<<define.d.dimensional.knight>>=
+knight <- function(d){
+  n <- d*(d-1)
+  out <- matrix(0,n,d)
+  out[cbind(rep(seq_len(n),each=2),c(t(which(diag(d)==0,arr.ind=TRUE))))] <- seq_len(2)
+  spray(rbind(out,-out,`[<-`(out,out==1,-1),`[<-`(out,out==2,-2)))
+}
+@ 
+
+Then, considering a four-dimensional chessboard
+(Figure~\ref{four_dimensional_knight}):
+
+\begin{figure}[h]
+  \centering \includegraphics[width=10cm]{four_dimensional_knight.pdf}
+  \caption{Four-dimensional knight\label{four_dimensional_knight} on a $4\times 4\times 4\times 4$ board.  Cells attacked by the knight shown by dots}
+\end{figure}
+
+<<dnightmoves>>=
+constant(knight(4)^6, drop=TRUE)
+@ 
+
+It is in such cases that the efficiency of the \proglang{map} class
+becomes evident: on my system (3.4\,GHz Intel Core i5 iMac)), the
+above call took just under~0.6 seconds of elapsed time whereas the
+same\footnote{Because \pkg{mpoly} does not accept negative powers, the
+  calculation was equivalent to \code{(knight(4) + xyz(4)\^{}2)\^{}6}.
+  Also note that the \pkg{multipol} package is not able to execute
+  these commands in a reasonable time.} calculation took over 173
+seconds using \pkg{mpoly}.
+
+If we want the number of ways to return to the starting point in 6 or
+fewer moves, we can simply add the unit multinomial and take the sixth
+power of the sum:
+  
+<<dnightmoves_can_wait>>=
+constant((1+knight(4))^6, drop=TRUE)
+@ 
+  
+(1.2 seconds for~\pkg{spray} vs 275 seconds for~\pkg{mpoly}).  For 8
+moves, the differences are more pronounced, with \pkg{spray} taking
+5.1 seconds and~\pkg{mpoly} requiring more than 1500 seconds).
+
+\bibliography{spray}
+\end{document}
+ 
