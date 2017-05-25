@@ -1,4 +1,23 @@
-`is_valid_spray` <- function(L){
+`spraymaker` <- function(L,addrepeats=FALSE,arity=ncol(L[[1]])){    # formal; this is the *only* way to create a spray object; 
+    stopifnot(is_valid_spray(L))
+    if(is.empty(L)){
+      M <- matrix(0,0,arity)
+      x <- numeric(0)
+      out <- list(M,x)
+    } else {
+        M <- L[[1]]
+        x <- L[[2]]
+        if(!addrepeats & anyDuplicated(M)){ 
+            stop("repeated indices; yet argument 'addrepeats' is FALSE")
+        }
+        out <- spray_maker(M,x)   # see RcppExports.R; strips out zeros and puts index rows in (some inscrutable) order
+    }
+
+    class(out) <- "spray"  # this is the *only time class<-() is called
+    return(out)
+}
+
+`is_valid_spray` <- function(L){  # L = list(M,x)
     stopifnot(is.list(L))
     stopifnot(length(L)==2)
     if(is.empty(L)){
@@ -13,29 +32,31 @@
 
 `is.spray` <- function(S){inherits(S,"spray")}
 
-`spraymaker` <- function(L,addrepeats=FALSE){    # formal; this is the *only* way to create a spray object; L = list(M,x)
-    stopifnot(is_valid_spray(L))
-    if(is.empty(L)){
-        out <- L
-    } else {
-        M <- L[[1]]
-        x <- L[[2]]
-        if(!addrepeats & anyDuplicated(M)){ 
-            stop("repeated indices; yet argument 'addrepeats' is FALSE")
-        }
-        out <- spray_maker(M,x)   # see RcppExports.R; strips out zeros and puts index rows in (some inscrutable) order
-    }
-    class(out) <- "spray"  # this is the *only time class<-() is called
-    return(out)
+`is.empty` <- function(L){
+  if( is.null(L[[1]]) & is.null(L[[2]])){
+    return(TRUE)
+  } else if(  identical(nrow(L[[1]]),0L) & (length(L[[2]])==0)){
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
 }
-
-`is.empty` <- function(L){ is.null(L[[1]]) & is.null(L[[2]])}
+ 
 `is.zero` <- is.empty
 
 `spray` <- function(M,x,addrepeats=FALSE){
-    if(is.vector(M)){M <- rbind(M)}
-    if(inherits(M,"partition")){M <- t(M)} # saves typing t() in 'spray(parts(4))' which drives me nuts
-    M <- as.matrix(M) # e.g., coerces expand.grid(...) to a matrix
+    if(is.vector(M)){
+        M <- rbind(M)
+    } else if(inherits(M,"partition")){
+        M <- unclass(t(M)) # saves typing t() in 'spray(parts(4))' which drives me nuts
+    } else if(is.spray(M)){
+        if(length(x)>1){
+            stop("spray(M,x) not defined if length(x)>1")
+        }
+        M <- index(M)
+    } else {
+        M <- as.matrix(M) # e.g., coerces expand.grid(...) to a matrix
+    }
     if(missing(x)){x <- rep(1,nrow(M))}
     if(length(x)==1){x <- rep(x,nrow(M))}
     return(spraymaker(list(M,x),addrepeats=addrepeats))
@@ -43,6 +64,8 @@
 
 `index` <- function(S){S[[1]]}    # these two functions are the only
 `value` <- function(S){S[[2]]}    # 'accessor' functions in the package
+
+`value<-` <- function(S,value){ spray(index(S),value) }
 
 `as.spray` <- function(arg1, arg2, addrepeats=FALSE, offbyone=FALSE){  # tries quite hard to coerce things to a spray
     if(is.spray(arg1)){
@@ -143,6 +166,7 @@ setGeneric("deriv")
 
 
 `[.spray` <- function(S, ...,drop=FALSE){
+
     dots <- list(...)
     first <- dots[[1]]
     if(is.matrix(first)){
@@ -152,23 +176,31 @@ setGeneric("deriv")
     } else {
         M <- as.matrix(expand.grid(dots))
     }
+
     if(ncol(M) != arity(S)){
-        stop("incorrect number of dimensions specified")
+      stop("incorrect number of dimensions specified")
     }
     jj <- spray_accessor(index(S),value(S),M) # returns a NumericVector
     if(drop){
-        return(jj)
+      return(jj)
     } else {
-        return(spray(M,jj))
+      return(spray(M,jj))
     }
 }  
 
 `[<-.spray` <- function(S, index, ..., value){
 
     if(missing(index)){ # S[] <- something
-        return(spray(spray::index(S),value))
+        if(is.spray(value)){
+            return(
+                spraymaker(spray_overwrite(
+                    spray::index(S    ),spray::value(S    ),
+                    spray::index(value),spray::value(value))))
+            } else {
+                return(spray(spray::index(S),value))
+            }
     }
-    
+
     if(is.matrix(index)){
         M <- index
     } else if(is.spray(index)){
@@ -203,6 +235,7 @@ setGeneric("deriv")
 
 `constant<-` <- function(S,value){ "[<-"(S,t(rep(0,arity(S))),value=value)}
 
+`zero` <- function(d){spray(matrix(0,0,d),numeric(0))}
 `product` <- function(power){spray(rbind(power))}
 `homog` <- function(d,power=1){spray(partitions::compositions(power,d))}
 `linear` <- function(x,power=1){spray(diag(power,length(x)),x)}
@@ -229,7 +262,7 @@ setGeneric("deriv")
 
 `print_spray_matrixform` <- function(S){
     if(is.empty(S)){
-        cat('the NULL polynomial\n')
+        cat(paste('empty sparse array with ', arity(S), ' columns\n',sep=""))
     } else {
         jj <-
             data.frame(index(S),symbol= " = ", val=round(value(S),getOption("digits")))
@@ -246,16 +279,20 @@ setGeneric("deriv")
     multiply_symbol2 <- "*"
 
     if(is.empty(S)){
-    cat('the NULL polynomial\n')
+    cat(paste('the NULL multinomial of arity ', arity(S), '\n',sep=""))
     return(S)
   }
 
-  if(arity(S) <= 3){
-     variables <- vector_of_3vars
+  if(is.null(getOption("sprayvars"))){
+    if(arity(S) <= 3){
+      variables <- vector_of_3vars
     } else {
-     variables <- paste("x",seq_len(arity(S)),sep="")
+      variables <- paste("x",seq_len(arity(S)),sep="")
     }
-
+  } else {
+    variables <- getOption("sprayvars")
+    }
+  
   if(is.empty(constant(S))){
     string <- ""
   } else {
@@ -313,9 +350,12 @@ setGeneric("deriv")
 
       }  # row of index loop closes
     
-    string <- paste(string,'\n',sep="")
-    cat(string)
-    return(invisible(S))
+  string <- paste(string,'\n',sep="")
+  for(i in strwrap(string)){
+    cat(noquote(i))
+    cat("\n")
+  }
+  return(invisible(S))
 }
   
 `print.spray` <- function(x, ...){
@@ -355,8 +395,15 @@ setGeneric("deriv")
 }
 
 `subs` <- function(S,dims,x){
+
   dims <- process_dimensions(S,dims)
-  return(spray(index(S)[,-dims,drop=FALSE], drop(index(S)[,dims,drop=FALSE]%*%x), addrepeats=TRUE))
+
+  a <- index(S)[,-dims,drop=FALSE]
+  b <- index(S)[, dims,drop=FALSE]
+  
+  jj <- apply(sweep(b,2,x,function(x,y){y^x}),1,prod)* value(S)
+  spray(a, jj, addrepeats=TRUE)
+
 }
 
 `deriv.spray` <- function(expr, i, derivative=1, ...){
@@ -371,4 +418,60 @@ setGeneric("deriv")
   stopifnot(length(orders) == arity(S))
   stopifnot(all(orders >= 0))
   return(spraymaker(spray_deriv(index(S),value(S),orders)))
-}  
+}
+
+`pmax` <- function(...){ UseMethod("pmax") }
+`pmax.default` <- function(..., na.rm=FALSE){ base::pmax(..., na.rm=FALSE) }
+
+`pmin` <- function(...){ UseMethod("pmin") }
+`pmin.default` <- function(..., na.rm=FALSE){ base::pmin(..., na.rm=FALSE) }
+
+`pmax.spray` <- function(x, ...) {
+    if(nargs()<3){
+        return(maxpair_spray(x, ...))
+    } else {
+        return(maxpair_spray(x, maxpair_spray(...)))
+    }
+}
+
+`pmin.spray` <- function(x, ...) {
+    if(nargs()<3){
+        return(minpair_spray(x, ...))
+    } else {
+        return(minpair_spray(x, minpair_spray(...)))
+    }
+}
+
+`maxpair_spray` <- function(S1,S2){
+    if(missing(S2)){ return(S1) }
+    if(!is.spray(S2)){   # S2 interpreted as a scalar
+        if(length(S2)>1){
+            stop("pmax(S,x) not defined if length(x)>1")
+        } else if (S2>0){
+            stop("pmax(S,x) not defined if x>0")
+        } else {
+            return(spray(index(S1),pmax(value(S1),S2)))
+        }
+    } else {
+        return(spraymaker(spray_pmax(index(S1),value(S1),index(S2),value(S2))))
+    }
+}
+
+`minpair_spray` <- function(S1,S2){
+    if(missing(S2)){ return(S1) }
+    if(!is.spray(S2)){
+        if(length(S2)>1){
+            stop("pmin(S,x) not defined if length(x)>1")
+        } else if (S2<0){
+            stop("pmin(S,x) not defined if x<0")
+        } else {
+            return(spray(index(S1),pmin(value(S1),S2)))
+        }
+    } else {
+        return(spraymaker(spray_pmin(index(S1),value(S1),index(S2),value(S2))))
+    }
+}
+
+`rspray` <- function(n,vals=1,arity=3,powers=0:2){
+    return(spray(matrix(sample(powers,n*arity,replace=TRUE),ncol=arity),addrepeats=TRUE,vals))
+}

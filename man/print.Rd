@@ -24,6 +24,13 @@ print_spray_polyform(S)
   \code{print_spray_matrixform()} and \code{print_spray_polyform()}
   depending on the value of option \code{polyform}; see examples
   section.
+
+  Option \code{sprayvars} is a character vector with entries
+  corresponding to the variable names for printing.
+
+  Note that printing a spray object (in either matrix form or polynomial
+  form) generally takes much longer than calculating it.
+  
   
 }
 \value{
@@ -41,11 +48,22 @@ Robin K. S. Hankin
 
 (a <- spray(diag(3)))
 
-options(polyform = TRUE)
-a^3
 
 options(polyform = FALSE)
 a^3
+
+options(polyform = TRUE)
+a^3
+
+
+options(sprayvars=letters)
+a <- diag(26)
+spray(a)
+
+## Following example from mpoly:
+a[1 + cbind(0:25, 1:26) \%\% 26] <- 2
+spray(a)
+
 
 
 }

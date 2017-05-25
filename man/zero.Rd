@@ -11,11 +11,14 @@ The zero polynomial
 Test for the zero, or empty, polynomial
 }
 \usage{
+zero(d)
 is.zero(L)
 is.empty(L)
 }
 \arguments{
-  \item{L}{A two-element list of indices and values, possibly a spray object}
+  \item{L}{A two-element list of indices and values, possibly a spray
+    object}
+  \item{d}{Integer specifying dimensionality of the spray (the arity)}
 }
 \details{
 Functions \code{is.empty()} and \code{is.zero()} are synonyms.  If spray
@@ -24,8 +27,12 @@ objects are interpreted as multivariate polynomials,
 as sparse arrays, \dQuote{\code{is.empty()}} is better (for me).
 }
 \examples{
-is.zero(zero)  # should be TRUE
 
+a <- lone(1,3)
+
+is.zero(a-a)  # should be TRUE
+
+is.zero(zero(6))
 
 x <- spray(t(0:1))
 y <- spray(t(1:0))

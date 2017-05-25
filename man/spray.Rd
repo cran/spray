@@ -6,6 +6,7 @@
 \alias{is_valid_spray}
 \alias{index}
 \alias{value}
+\alias{value<-}
 \title{
 Create sparse array objects
 }
@@ -14,11 +15,12 @@ Create, coerce, and test for sparse array objects
 }
 \usage{
 spray(M, x, addrepeats=FALSE)
-spraymaker(L, addrepeats=FALSE)
+spraymaker(L, addrepeats=FALSE, arity=ncol(L[[1]]))
 is.spray(S)
 as.spray(arg1, arg2, addrepeats=FALSE, offbyone=FALSE)
 index(S)
 value(S)
+value(S) <- value
 is_valid_spray(L)
 }
 \arguments{
@@ -30,11 +32,16 @@ is_valid_spray(L)
   \item{arg1,arg2}{Various arguments to be coerced to a spray}
   \item{addrepeats}{Boolean, with default \code{FALSE} meaning to check
     for repeated index rows and, if any are found, return an error}
+  \item{value}{In the assignment operator \code{`value<-()`}, a scalar so
+    that \code{value(S) <- x} works as expected}
   \item{offbyone}{In function \code{as.spray()}, when converting from an
     array.  Argument \code{offbyone} is Boolean with default
     \code{FALSE} meaning to insert array elements in positions
     corresponding to index elements, and \code{TRUE} meaning to add
     one}
+  \item{arity}{In function \code{spraymaker()}, integer specifying the
+    arity (number of columns of the index matrix \code{L[[1]]}); ignored
+    if \code{L} is non-empty.  See details}
 }
 \details{
 
@@ -44,13 +51,21 @@ is_valid_spray(L)
 
   Function \code{spraymaker()} is the formal creator function, and it is
   written to take the output of the C++ routines and return a spray
-  object.
+  object.  The reason this needs an \code{arity} argument is that C++
+  sometimes returns \code{NULL} (in lieu of a zero-row matrix, which it
+  cannot deal with).  In this case, we need some way to tell R the arity
+  of the corresponding spray object.
 
   Functions \code{index()} and \code{value()} are accessor methods.
+
   
   
 }
+\note{
+Idiom such as \code{spray(S,x)} is not defined if \code{length(x)>1}
+because the elements of a spray are not stored in any specific order.
 
+  }
 \author{
 Robin K. S. Hankin
 }
@@ -74,5 +89,3 @@ stopifnot(S==S1)
 }
 
 \keyword{symbolmath}
-
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line

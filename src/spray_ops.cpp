@@ -89,6 +89,11 @@ NumericVector makevalue(const spray S){  // takes a spray, returns data
 
 List retval (const spray &S){  // used to return a list to R
 
+  // In this function, returning a zero-row matrix results in a
+  // segfault ('memory not mapped').  So we check for 'S' being zero
+  // size and, if so, return a special Nil value.  This corresponds to
+  // an empty spray object.
+  
     if(S.size() == 0){
         return List::create(Named("index") = R_NilValue,
                             Named("value") = R_NilValue
@@ -132,22 +137,18 @@ List spray_add
     return retval(S1);
 }
 
-// [[Rcpp::export]]
-List spray_mult  // multiply two sprays
+
+spray prod //
 (
- const IntegerMatrix &M1, const NumericVector &d1,
- const IntegerMatrix &M2, const NumericVector &d2
+ const spray S1, const spray S2
  ){
-    spray S1, S2, S3;   // basic idea is S3=S1*S2
+    spray Sout;
     spray::const_iterator it1,it2;
     mycont v1,v2,vsum;
     double x1,x2;
     unsigned int i;
-    
-    S1 = prepare(M1, d1);
-    S2 = prepare(M2, d2);
-    
-    // the "meat" of this function:  S3=S1*S2
+
+    // the "meat" of this function:  Sout=S1*S2
     for (it1=S1.begin(); it1 != S1.end(); ++it1){
         v1 = it1->first;
         x1 = it1->second;
@@ -158,14 +159,34 @@ List spray_mult  // multiply two sprays
             for(i=0; i<v1.size(); i++){
                 vsum.push_back(v1[i] + v2[i]);  // meat 1
             }
-            S3[vsum] += x1*x2;       // meat 2
+            Sout[vsum] += x1*x2;       // meat 2
         }
     }
     //    for(spray::iterator it=S3.begin(); it != S3.end(); ++it){
     //    if(it->second ==0){S3.erase(it);}
     // }
 
-    return retval(S3);
+    return Sout;
+
+}    
+
+spray unit //
+(
+ unsigned int n
+){
+    const IntegerMatrix M(1,n);
+    NumericVector one(1);
+    one[0] = 1;
+    return prepare(M,one);
+}
+
+// [[Rcpp::export]]
+List spray_mult  // multiply two sprays
+(
+ const IntegerMatrix &M1, const NumericVector &d1,
+ const IntegerMatrix &M2, const NumericVector &d2
+ ){
+    return retval(prod(prepare(M1,d1),prepare(M2,d2)));
 }
 
 // [[Rcpp::export]]
@@ -378,3 +399,82 @@ List spray_deriv
     }  // i loop closes
     return retval(S);
 }
+
+// [[Rcpp::export]]
+List spray_pmax
+(
+ const IntegerMatrix &M1, const NumericVector &d1,
+ const IntegerMatrix &M2, const NumericVector &d2 
+ ){
+    spray S1,S2;
+    mycont v;
+    spray::const_iterator it;   // it iterates through a sparse array
+    
+    S1 = prepare(M1, d1);
+    S2 = prepare(M2, d2);
+
+    for (it=S1.begin(); it != S1.end(); ++it){
+        v = it->first;
+        if(S2[v] > S1[v]){ S1[v] = S2[v];} // S1[v] = max(S1[v],S2[v]);
+        S2.erase(v); // not S2[v] = 0;
+    }
+            
+    for (it=S2.begin(); it != S2.end(); ++it){ //iterate through S2 keys not in S1
+        v = it->first;
+        if(S2[v] > 0){ S1[v] = S2[v]; }
+    }
+
+    return retval(S1);
+}
+
+// [[Rcpp::export]]
+List spray_pmin
+(
+ const IntegerMatrix &M1, const NumericVector &d1,
+ const IntegerMatrix &M2, const NumericVector &d2 
+ ){
+    spray S1,S2;
+    mycont v;
+    spray::const_iterator it;   // it iterates through a sparse array
+    
+    S1 = prepare(M1, d1);
+    S2 = prepare(M2, d2);
+
+    for (it=S1.begin(); it != S1.end(); ++it){
+        v = it->first;
+        if(S2[v] < S1[v]){ S1[v] = S2[v]; }// S1[v] = min(S1[v],S2[v]);
+        S2.erase(v);
+    }
+            
+    for (it=S2.begin(); it != S2.end(); ++it){
+        v = it->first;
+        if(S2[v] < 0){S1[v] = S2[v]; } // S1[v] = min(S2[v],0);
+    }
+
+    return retval(S1);
+}
+
+
+// [[Rcpp::export]]
+List spray_power
+(
+ const IntegerMatrix &M, const NumericVector &d, const NumericVector &pow
+ ){
+    spray out = unit(M.ncol());
+    spray S = prepare(M,d);
+    unsigned int n=pow[0];
+
+    if(n == 0){
+        return retval(out);
+    } else if (n==1){
+        return retval(S);
+    } else {  // n>1
+        for( ; n>0; n--){
+            out = prod(S,out);
+        }
+    }
+    return retval(out);
+}
+
+
+

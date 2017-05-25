@@ -30,7 +30,7 @@ option \code{offbyone}.
   \code{TRUE}, it effectively adds one from the index matrix, so a zero
   entry in the index matrix means the first position in that dimension.
 
-  After the subraction, if performed, the function will not operate if
+  After the subtraction, if performed, the function will not operate if
   any index is less than 1.
   
 }

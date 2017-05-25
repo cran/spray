@@ -24,6 +24,10 @@
 
   If \code{drop} is \code{TRUE}, a numeric vector is returned but the
   elements may be in any order.
+
+  If \code{a <- spray(diag(3))}, for example, then idiom such as
+  \code{a[c(1,2,3)]} cannot work, because one would like \code{a[1,2,3]}
+  and \code{a[1:3,2,3]} to work.
   
 }
 \examples{
@@ -43,6 +47,13 @@ a
 
 options(polyform = FALSE)  # print is sparse array form
 a
+
+
+S1 <- spray(diag(5),1:5)
+S2 <- spray(1-diag(5),1:5)
+S1[] <- 3
+S1[] <- S2
+
 
 
 

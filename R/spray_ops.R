@@ -84,26 +84,26 @@ spray_times_spray <- function(S1,S2){
     spraymaker(spray_mult(
         index(S1),value(S1),
         index(S2),value(S2)
-        ))
+        ),arity=arity(S1))
 }
 
 spray_times_scalar <- function(S,x){
     stopifnot(length(x)==1)
-    return(spray(index(S), x*value(S)))
+    return(spraymaker(spray(index(S), x*value(S)),arity=arity(S)))
 }
 
 spray_plus_spray <- function(S1,S2){
-    if(is.zero(S1)){
+  stopifnot(arity(S1)==arity(S2))
+  if(is.zero(S1)){
         return(S2)
     } else if(is.zero(S2)){
         return(S1)
       }
 
-    stopifnot(arity(S1)==arity(S2))
     return(spraymaker(spray_add(
     index(S1),value(S1),
     index(S2),value(S2)
-        )))
+        ),arity=arity(S1)))
 }
 
 spray_plus_scalar <- function(S,x){
@@ -111,16 +111,12 @@ spray_plus_scalar <- function(S,x){
 }
 
 spray_power_scalar <- function(S,n){
-    stopifnot(n==round(n))
-    if(n<0){
-        stop("use ooom() for negative powers")
-    } else if(n==0){
-        return(constant(S))
-    } else if(n==1){
-        return(S)
-    } else {
-        return(spray_times_spray(S,Recall(S,n-1)))   # the meat
-    }
+  stopifnot(n==round(n))
+  if(n<0){
+    stop("use ooom() for negative powers")
+  } else {
+    return(spraymaker(spray_power(index(S),value(S),n),arity=arity(S)))
+  }
 }
 
 `spray_eq_spray` <- function(S1,S2){

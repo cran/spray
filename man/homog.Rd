@@ -37,8 +37,12 @@ Robin K. S. Hankin
 \note{
 The functions here are related to their equivalents in the multipol
 package, but are not exactly the same.
+
+Function \code{zero()} is documented at \code{zero.Rd}, but is listed
+below for convenience.
+
 }
-\seealso{\code{\link{constant}}}
+\seealso{\code{\link{constant}}, \code{\link{zero}}}
 \examples{
 product(1:3)                   #      x * y^2 * z^3
 homog(3)                       #      x + y + z
@@ -48,6 +52,7 @@ linear(1:3,2)                  #      1*x^2 + 2*y^2 + 3*z^2
 lone(3)                        #      z
 lone(2,3)                      #      y
 one(3)                         #      1
+zero(3)                        #      0
 xyz(3)                         #      xyz
 }
 \keyword{symbolmath}

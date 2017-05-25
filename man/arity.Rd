@@ -5,7 +5,7 @@ The arity of a spray object
 }
 \description{
 The arity of a spray object: the number of indices needed to retrieve an
-entry, or the number of rows in the index matrix.
+entry, or the number of columns in the index matrix.
 }
 \usage{
 arity(S)

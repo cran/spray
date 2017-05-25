@@ -28,7 +28,7 @@ if \code{S} is a spray object, then \code{spray(S,i,n)} returns
 
 Function \code{aderiv()} is the generalized derivative; if \code{S} is a
 spray of arity 3, then \code{aderiv(S,c(i,j,k))} returns
-\eqn{\frac{\partial S^{i+j+k}}{\partial x_1^i\partial
+\eqn{\frac{\partial^{i+j+k} S}{\partial x_1^i\partial
 x_2^j\partial x_3^k}}{d^(i+j+k)S/dx_1^i dx_2^j dx_3^k}.
 
 }

@@ -1,4 +1,4 @@
-useDynLib(spray)
+useDynLib(spray, .registration=TRUE)
 exportPattern("^[[:alpha:]]+")
 
 importFrom(Rcpp, evalCpp)
@@ -8,6 +8,8 @@ importFrom(partitions,compositions)
 import(methods)
 
 export(spray_add)
+export(pmax)
+export(pmin)
 
 S3method("[", spray)
 S3method("[<-", spray)
@@ -18,3 +20,7 @@ S3method(print,spray)
 S3method(Ops,spray)
 S3method(asum,spray)
 S3method(deriv,spray)
+S3method(pmax,spray)
+S3method(pmin,spray)
+S3method(pmax,default)
+S3method(pmin,default)
