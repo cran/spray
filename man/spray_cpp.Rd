@@ -10,7 +10,6 @@
 \alias{spray_equality}
 \alias{spray_asum_include}
 \alias{spray_asum_exclude}
-\alias{spray_missing_accessor}
 \alias{spray_deriv}
 \alias{spray_pmax}
 \alias{spray_pmin}

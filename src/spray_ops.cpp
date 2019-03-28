@@ -45,6 +45,8 @@ spray prepare(const IntegerMatrix M, const NumericVector d){
     spray S;
     mycont v;
     unsigned int i,j;
+    spray::iterator it;
+
     for(i=0; i<M.nrow() ; i++){
         if(d[i] != 0){
                 v.clear();
@@ -52,7 +54,16 @@ spray prepare(const IntegerMatrix M, const NumericVector d){
                     v.push_back(M(i,j));
                 }
                 S[v] += d[i];
-            }
+        }
+    }  // i loop closes
+    
+    // Now remove zero entries:
+    for(it=S.begin(); it != S.end(); /* nop (sic) */){
+        if(it->second == 0){  // if a zero entry...
+            S.erase(it++);   // remove entry and increment
+        } else {
+            ++it;  // else just increment
+        }
     }
     return(S);
 }
@@ -157,9 +168,9 @@ spray prod //
             x2 = it2->second;
             vsum.clear();
             for(i=0; i<v1.size(); i++){
-                vsum.push_back(v1[i] + v2[i]);  // meat 1
+                vsum.push_back(v1[i] + v2[i]);  // meat 1: powers add
             }
-            Sout[vsum] += x1*x2;       // meat 2
+            Sout[vsum] += x1*x2;                // meat 2: coefficients multiply
         }
     }
     //    for(spray::iterator it=S3.begin(); it != S3.end(); ++it){
@@ -416,7 +427,7 @@ List spray_pmax
     for (it=S1.begin(); it != S1.end(); ++it){
         v = it->first;
         if(S2[v] > S1[v]){ S1[v] = S2[v];} // S1[v] = max(S1[v],S2[v]);
-        S2.erase(v); // not S2[v] = 0;
+        S2.erase(v); // not S2[v] = 0;  // OK because the iterator is it1 and this line modifies S2
     }
             
     for (it=S2.begin(); it != S2.end(); ++it){ //iterate through S2 keys not in S1

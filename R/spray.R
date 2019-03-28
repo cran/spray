@@ -121,51 +121,79 @@ setGeneric("deriv")
 }
 
 
-#`spray_missing_accessor` <- function(S,dots){
-#  stop("not yet implemented")
-#  browser()
+`spray_missing_accessor` <- function(S,dots){
+
+ ## This function is a placeholder for a discussion of why idiom such
+ ## as     S[1,,p,1:3]  is problematic.
+ 
+
+ return(0)
+##  browser()
 
 
 
-  ## Not implemented.
-  
-  ## the problem is illustrated by removing the stop() statement
-  ## above, and changing the first line of the body of `[.spray`() to
-  ## something like spray_missing_accessor(S,dots=match.call()).
-  
-  ## Then loading the package and typing 'S <- spray(diag(1:6)) ;
-  ## S[1,,1:3]' on the commandline.  Then you enter the browser;
-  ## 'dots' is a 5-element list.  The first two are the function name
-  ## and S.  Strip these two out. Then the first element seems to be
-  ## just a numeric "1".  The second element, corresponding to the
-  ## thing between the two consecutive commas, is some sort of ghostly
-  ## not NULL, not a list, nothing that I can make sense of.  For
-  ## example, 'dput(dots[[2]])' gives an empty line; 'dput(dots[2])'
-  ## gives structure(list(), .Names = ""); but note that
-  ## structure(list(), .Names = "") will not parse on the commandline.
-  ## Therefore one cannot use constructions such as
-  ## 'identical(dots[2], structure(list(), .Names = ""))'.
-  ##
-  ## This might be surmountable, but for the following: dots[[3]]
-  ## prints "1:3" on the commandline.  So typing '1 + dots[[3]]' gives
-  ## an error (specifically, "non-numeric argument to binary
-  ## operator").
+## Not implemented.
 
-  ## This is why Jonty had to resort to peculiar tricks with
-  ## eval.parent() in Oarray.
-
-  ## ... quite apart from all this, there is another reason why I have
-  ## not implemented things like S[1,,1:3].  Such constructions simply
-  ## do not fit nicely into the STL map methods in spray_ops.cpp.  At
-  ## least I can't see any nice way.  You'd need some sort of partial
-  ## matching system
-
-#}
+## the problem is illustrated by: removing the return() statement from
+## above and uncomment the browser() line.  Then change the first
+## line of the body of `[.spray`() to something like
 
 
+##         spray_missing_accessor(S,dots=match.call())
+
+
+
+## Then loading the package and typing
+##
+##
+## R>      p <- 1:3
+## R>      S <- spray(diag(1:6)) ;
+## R>      S[1,,p,1:3]
+##
+##
+##
+##  On typing this, you enter the browser;
+## 'dots' is a 6-element list.  The first, dots[[1]], is the function name `[.spray`
+##
+## and the second, dots[[2]], is just S.   This is the *symbol* S, not the variable.  You
+## can evaluate the symbol by typing eval(dots[[2]]) which shows the value of S.
+
+## The third element, dots[[3]], is just a numeric "1".  The next element, dots[[4]], 
+## corresponding to the gap between the two consecutive commas, is some sort of ghostly
+## not NULL, not a list, nothing that I can make sense of.  For
+## example, 'dput(dots[[4]])' gives an empty line; 'dput(dots[4])'
+## gives "()" .... previous versions of R gave things like
+## structure(list(), .Names = ""); but note that
+## structure(list(), .Names = "") will not parse on the commandline.
+
+## So, at least prior to R-3.0.0,  one cannot use constructions such as
+## 'identical(dots[2], structure(list(), .Names = ""))'.
+
+
+## Now dots[[5]] and indeed dput(dots[[5]]) both return the string
+## `p`.  This can be evaluated with something like eval(dots[[5]]) but
+## you need to be careful about the environment in which p is to be
+## evaluated.  This is why Jonty had to resort to peculiar tricks with
+## eval.parent() in Oarray.
+
+
+## Also note that dots[[4]] and dput(dots[[4]]) show "1:3"; note that
+##  class(dots[[6]])is "call", not "numeric" as one might expect.
+
+## ... quite apart from all this, there is another reason why I have
+## not implemented things like S[1,,1:3].  Such constructions simply
+## do not fit nicely into the STL map methods in spray_ops.cpp.  At
+## least I can't see any nice way.  You'd need some sort of partial
+## matching system.
+
+## I also need to fix OArray.
+
+
+}
 
 
 `[.spray` <- function(S, ...,drop=FALSE){
+
 
     dots <- list(...)
     first <- dots[[1]]
@@ -474,4 +502,16 @@ setGeneric("deriv")
 
 `rspray` <- function(n,vals=1,arity=3,powers=0:2){
     return(spray(matrix(sample(powers,n*arity,replace=TRUE),ncol=arity),addrepeats=TRUE,vals))
+}
+
+`knight` <- function(d=2){
+  n <- d * (d - 1)
+  out <- matrix(0, n, d)
+  out[cbind(rep(seq_len(n), each=2), c(t(which(diag(d)==0, arr.ind=TRUE))))] <- seq_len(2)
+  spray(rbind(out, -out, `[<-`(out, out==1, -1),`[<-`(out, out==2, -2)))
+}
+
+`king` <- function(d=2){
+  out <- spray(expand.grid(replicate(d,list(c(-1L,0L,1L)))))
+  return(out-1)
 }
