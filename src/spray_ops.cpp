@@ -56,13 +56,14 @@ spray prepare(const IntegerMatrix M, const NumericVector d){
                 S[v] += d[i];
         }
     }  // i loop closes
-    
+
     // Now remove zero entries:
-    for(it=S.begin(); it != S.end(); /* nop (sic) */){
-        if(it->second == 0){  // if a zero entry...
-            S.erase(it++);   // remove entry and increment
+    it = S.begin();
+    while(it != S.end()){
+        if(it->second == 0){
+            it = S.erase(it); //  in C++11, erase() returns *next* iterator
         } else {
-            ++it;  // else just increment
+            ++it;  // else just increment the iterator
         }
     }
     return(S);
