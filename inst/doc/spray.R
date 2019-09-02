@@ -109,32 +109,32 @@ subs(S5, 2, 5)
 
 
 ###################################################
-### code chunk number 14: spray.Rnw:337-338
+### code chunk number 14: spray.Rnw:338-339
 ###################################################
 aderiv((xyz(3) + linear(1:3))^3, 1:3)
 
 
 ###################################################
-### code chunk number 15: spray.Rnw:380-382
+### code chunk number 15: spray.Rnw:381-383
 ###################################################
 d <- 2
 kernel <- spray(rbind(0, diag(d), -diag(d)))/(1 + 2*d)
 
 
 ###################################################
-### code chunk number 16: spray.Rnw:388-389
+### code chunk number 16: spray.Rnw:389-390
 ###################################################
 initial <- spray(rep(10, d))
 
 
 ###################################################
-### code chunk number 17: spray.Rnw:395-396
+### code chunk number 17: spray.Rnw:396-397
 ###################################################
 t14 <- initial * kernel^14
 
 
 ###################################################
-### code chunk number 18: spray.Rnw:402-405
+### code chunk number 18: spray.Rnw:403-406
 ###################################################
 
 traps <- matrix(c(2, 3, 3, 5), 2, 2)
@@ -142,7 +142,7 @@ n <- 17
 
 
 ###################################################
-### code chunk number 19: spray.Rnw:410-416
+### code chunk number 19: spray.Rnw:411-417
 ###################################################
 timestep <- function(state, kernel, traps){
   state <- state * kernel
@@ -153,7 +153,7 @@ timestep <- function(state, kernel, traps){
 
 
 ###################################################
-### code chunk number 20: spray.Rnw:425-428
+### code chunk number 20: spray.Rnw:426-429
 ###################################################
 state <- initial
 for(i in 1:100){state <- timestep(state, kernel, traps)}
@@ -203,7 +203,7 @@ constant((1 + knight(4))^6, drop=TRUE)
 
 
 ###################################################
-### code chunk number 26: spray.Rnw:564-568
+### code chunk number 26: spray.Rnw:565-569
 ###################################################
 a <- diag(26)
 options(sprayvars = letters)
