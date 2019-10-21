@@ -5,10 +5,6 @@
     lclass <- nchar(.Method[1]) > 0
     rclass <- !unary && (nchar(.Method[2]) > 0)
     
-    if (!is.element(.Generic, c("+", "-", "*", "/", "^", "=="))){
-        stop("operator '", .Generic, "' is not implemented for sprays")
-    }
-
     if(unary){
         if (.Generic == "+") {
             return(e1)
@@ -17,6 +13,10 @@
         } else {
             stop("Unary operator '", .Generic, "' is not implemented for sprays")
         }
+    }
+
+    if (!is.element(.Generic, c("+", "-", "*", "/", "^", "==", "!="))){
+        stop("operator '", .Generic, "' is not implemented for sprays")
     }
     
     if (.Generic == "*") {
@@ -60,14 +60,20 @@
             return(spray_eq_spray(e1,e2))
         } else {
             stop("Generic '==' only compares two spray objects with one another")
-        }          
+        }
+    } else if (.Generic == "!="){
+        if(lclass && rclass){
+            return(!spray_eq_spray(e1,e2))
+        } else {
+            stop("Generic '!=' only compares two spray objects with one another")
+        }
     } else if (.Generic == "/") {
         if(lclass && !rclass){
             return(spray_times_scalar(e1,1/e2))
-          } else {
-        stop("don't use '/', use ooom() instead")
+        } else {
+            stop("don't use '/', use ooom() instead")
+        }
     }
-  }
 }
 
 spray_negative <- function(S){
@@ -79,7 +85,7 @@ spray_negative <- function(S){
 }
 
 spray_times_spray <- function(S1,S2){
-    if(is.zero(S1) || is.zero(S2)){return(zero)}
+    if(is.zero(S1) || is.zero(S2)){return(spray_times_scalar(S1,0))}
     stopifnot(arity(S1) == arity(S2))
     spraymaker(spray_mult(
         index(S1),value(S1),
@@ -122,7 +128,7 @@ spray_power_scalar <- function(S,n){
 `spray_eq_spray` <- function(S1,S2){
     if(arity(S1) != arity(S2)){
         return(FALSE)
-    } else if(length(S1) != length(S2)){
+    } else if(nterms(S1) != nterms(S2)){
         return(FALSE)
     } else {
         return(spray_equality(index(S1),value(S1),index(S2),value(S2)))

@@ -9,6 +9,8 @@ The spray package: sparse arrays in R
 Status](https://travis-ci.org/RobinHankin/spray.svg?branch=master)](https://travis-ci.org/RobinHankin/spray)
 [![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version/spray)](https://cran.r-project.org/package=spray)
 [![Rdoc](http://www.rdocumentation.org/badges/version/spray)](http://www.rdocumentation.org/packages/spray)
+[![Codecov test
+coverage](https://codecov.io/gh/RobinHankin/spray/branch/master/graph/badge.svg)](https://codecov.io/gh/RobinHankin/spray/branch/master)
 <!-- badges: end -->
 
 # Overview
@@ -59,11 +61,11 @@ M <- rbind(
 S1 <- spray(M,7:8)
 S1
 #>                        val
-#>  3 4 2 2 7 2 3 2 3  =    8
 #>  2 2 2 2 2 2 2 2 2  =    7
+#>  3 4 2 2 7 2 3 2 3  =    8
 ```
 
-Note that object \``S1` is rather compact by comparison with plain array
+Note that object `S1` is rather compact by comparison with plain array
 `a`, as it needs to record only a 18-element index array of integers and
 two double-precision entries. The order in which the elements are stored
 is implementation-specific (see the vignette for details and an extended
@@ -77,8 +79,8 @@ S2 <-spray(rbind(
   c(3,4,2,2,7,2,3,2,3)), c(100,-8))
 S2
 #>                        val
-#>  3 4 2 2 7 2 3 2 3  =   -8
 #>  1 2 3 1 3 3 1 4 1  =  100
+#>  3 4 2 2 7 2 3 2 3  =   -8
 ```
 
 then
@@ -102,15 +104,15 @@ S1 <- spray(matrix(c(0,0,0,1,0,0,1,1,1,2,0,3),ncol=3),1:4)
 S2 <- spray(matrix(c(6,-7,8,0,0,2,1,1,3),byrow=TRUE,ncol=3),c(17,11,-4))
 S1
 #>            val
-#>  1 1 3  =    4
-#>  0 1 0  =    3
 #>  0 0 1  =    1
+#>  0 1 0  =    3
 #>  0 0 2  =    2
+#>  1 1 3  =    4
 S2
 #>             val
-#>  1  1 3  =   -4
 #>  6 -7 8  =   17
 #>  0  0 2  =   11
+#>  1  1 3  =   -4
 ```
 
 it is natural to interpret the rows of the index matrix as powers of
@@ -122,9 +124,9 @@ method:
 ``` r
 options(polyform = TRUE)
 S1
-#> +4*x*y*z^3 +3*y +z +2*z^2
+#> +z +3*y +2*z^2 +4*x*y*z^3
 S2
-#> -4*x*y*z^3 +17*x^6*y^-7*z^8 +11*z^2
+#> +17*x^6*y^-7*z^8 +11*z^2 -4*x*y*z^3
 ```
 
 (only the print method has changed; the objects themselves are
@@ -136,15 +138,14 @@ multivariate polynomial multiplication and addition:
 
 ``` r
 S1+S2
-#> +3*y +13*z^2 +z +17*x^6*y^-7*z^8
+#> +z +3*y +13*z^2 +17*x^6*y^-7*z^8
 S1*S2
-#> +17*x^6*y^-7*z^9 -4*x*y*z^4 +68*x^7*y^-6*z^11 +11*z^3
-#> +34*x^6*y^-7*z^10 +33*y*z^2 -12*x*y^2*z^3 -16*x^2*y^2*z^6
-#> +51*x^6*y^-6*z^8 +22*z^4 +36*x*y*z^5
+#> -16*x^2*y^2*z^6 -12*x*y^2*z^3 +17*x^6*y^-7*z^9 +68*x^7*y^-6*z^11
+#> +34*x^6*y^-7*z^10 +22*z^4 +36*x*y*z^5 +33*y*z^2 +51*x^6*y^-6*z^8
+#> -4*x*y*z^4 +11*z^3
 S1^2+4*S2
-#> +9*y^2 -16*x*y*z^3 +16*x^2*y^2*z^6 +24*x*y^2*z^3 +4*z^4
-#> +68*x^6*y^-7*z^8 +45*z^2 +12*y*z^2 +16*x*y*z^5 +8*x*y*z^4 +4*z^3
-#> +6*y*z
+#> +4*z^3 -16*x*y*z^3 +45*z^2 +6*y*z +12*y*z^2 +24*x*y^2*z^3 +9*y^2
+#> +16*x^2*y^2*z^6 +4*z^4 +8*x*y*z^4 +16*x*y*z^5 +68*x^6*y^-7*z^8
 ```
 
 It is possible to introduce an element of symbolic calculation,
@@ -195,5 +196,5 @@ aderiv((xyz(3) + linear(1:3))^3, 1:3)
 ```
 
 The package vignette offers a detailed discussion of the package design
-philosophy; also, the `mvp` package provdies a further interpretation of
+philosophy; also, the `mvp` package provides a further interpretation of
 the concept of “sparse” in the context of multivariate polynomials.

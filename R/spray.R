@@ -65,13 +65,16 @@
 `index` <- function(S){S[[1]]}    # these two functions are the only
 `value` <- function(S){S[[2]]}    # 'accessor' functions in the package
 
-`value<-` <- function(S,value){ spray(index(S),value) }
+`value<-` <- function(S,value){
+    stopifnot(length(value)==1)
+    spray(index(S),value)
+}
 
 `as.spray` <- function(arg1, arg2, addrepeats=FALSE, offbyone=FALSE){  # tries quite hard to coerce things to a spray
     if(is.spray(arg1)){
         return(arg1)  
     } else if(is.list(arg1)){
-        return(spraymaker(arg1),addrepeats=addrepeats)
+        return(spraymaker(arg1,addrepeats=addrepeats))
     } else if(is.matrix(arg1) & !missing(arg2)){
         return(spraymaker(list(arg1,arg2),addrepeats=addrepeats))
     } else if(is.array(arg1)){
@@ -100,17 +103,19 @@ setGeneric("deriv")
 }
 
 `as.array.spray` <- function(x, offbyone=FALSE, compact=FALSE, ...){
-    if(compact){ind <- sweep(ind,2,apply(ind,2,min)) }
-    dS <- dim(x) 
     ind <- index(x)
+    dS <- dim(x) 
+    if(compact){
+        jj <- apply(ind,2,min)
+        dS <- dS-jj+1
+        ind <- 1+sweep(ind,2,jj)
+    } 
     if(offbyone) {
       ind <- ind+1
       dS <- dS + 1
     }
 
-    if(any(ind<0)){
-        stop("There are negative index elements")
-    } else if(any(ind==0)){
+    if(any(ind==0)){  # ind<0 detected by dS <- dim(x) above
         stop("There are zero index elements")
     }
     
@@ -349,9 +354,7 @@ setGeneric("deriv")
         vars <- variables[which(jj !=0)]
         powers <- jj[jj!=0]
         lv <- length(vars)
-        if(lv==0){ # constant; already printed
-            ignore <- 3  # do nothing
-        } else if(lv==1){   # just one variable
+        if(lv==1){   # just one variable
             if(powers==1){
                 term <- paste(term, vars, sep="") 
             } else {
