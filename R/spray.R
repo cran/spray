@@ -1,3 +1,8 @@
+setClass("spray",
+         representation = representation(index="numeric",value="numeric"),
+         prototype      = list(index=numeric(),value=numeric()),
+         )
+
 `spraymaker` <- function(L,addrepeats=FALSE,arity=ncol(L[[1]])){    # formal; this is the *only* way to create a spray object; 
     stopifnot(is_valid_spray(L))
     if(is.empty(L)){
@@ -518,3 +523,16 @@ setGeneric("deriv")
 }
 
 `nterms` <- function(S){ nrow(index(S)) }
+
+setGeneric("zapsmall")
+setMethod("zapsmall","spray",function(x,digits){
+    zap(x,digits=digits)
+})
+
+setMethod("zapsmall","ANY",function(x,digits){
+    base::zapsmall(x,digits=digits)
+})
+
+`zap` <- function(x, digits=getOption("digits")){
+  spray(index(x),base::zapsmall(value(x),digits=digits))
+}

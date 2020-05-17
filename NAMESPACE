@@ -4,12 +4,12 @@ exportPattern("^[[:alpha:]]+")
 importFrom(Rcpp, evalCpp)
 importFrom(magic,adiag)
 importFrom(partitions,compositions)
-
 import(methods)
 
 export(spray_add)
 export(pmax)
 export(pmin)
+export(zapsmall)
 
 S3method("[", spray)
 S3method("[<-", spray)
@@ -24,3 +24,4 @@ S3method(pmax,spray)
 S3method(pmin,spray)
 S3method(pmax,default)
 S3method(pmin,default)
+
