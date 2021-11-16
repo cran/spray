@@ -1,6 +1,10 @@
 \name{constant}
 \alias{constant}
+\alias{constant.spray}
+\alias{constant,spray-method}
 \alias{constant<-}
+\alias{constant<-.spray}
+\alias{constant<-,spray-method}
 \title{
   Get or set the constant term of a spray object
 }
@@ -10,11 +14,11 @@ an index of all zeros.  These functions get or set the constant of a
 spray object.
 }
 \usage{
-constant(S,drop=FALSE)
-constant(S) <- value
+constant(x,drop=FALSE)
+constant(x) <- value
 }
 \arguments{
-  \item{S}{Object of class spray}
+  \item{x}{Object of class spray}
   \item{value}{Numeric value to set the constant coefficient to}
   \item{drop}{Boolean, with default \code{FALSE} meaning to return a
     spray object and \code{TRUE} meaning to return a numeric value}

@@ -109,32 +109,32 @@ subs(S5, 2, 5)
 
 
 ###################################################
-### code chunk number 14: spray.Rnw:338-339
+### code chunk number 14: spray.Rnw:339-340
 ###################################################
 aderiv((xyz(3) + linear(1:3))^3, 1:3)
 
 
 ###################################################
-### code chunk number 15: spray.Rnw:381-383
+### code chunk number 15: spray.Rnw:382-384
 ###################################################
 d <- 2
 kernel <- spray(rbind(0, diag(d), -diag(d)))/(1 + 2*d)
 
 
 ###################################################
-### code chunk number 16: spray.Rnw:389-390
+### code chunk number 16: spray.Rnw:390-391
 ###################################################
 initial <- spray(rep(10, d))
 
 
 ###################################################
-### code chunk number 17: spray.Rnw:396-397
+### code chunk number 17: spray.Rnw:397-398
 ###################################################
 t14 <- initial * kernel^14
 
 
 ###################################################
-### code chunk number 18: spray.Rnw:403-406
+### code chunk number 18: spray.Rnw:404-407
 ###################################################
 
 traps <- matrix(c(2, 3, 3, 5), 2, 2)
@@ -142,22 +142,22 @@ n <- 17
 
 
 ###################################################
-### code chunk number 19: spray.Rnw:411-417
+### code chunk number 19: spray.Rnw:412-418
 ###################################################
 timestep <- function(state, kernel, traps){
   state <- state * kernel
-  state <- spray(index(state)%%n, value(state), addrepeats = TRUE)
+  state <- spray(index(state)%%n, coeffs(state), addrepeats = TRUE)
   state[traps] <- 0
   return(state)
 }
 
 
 ###################################################
-### code chunk number 20: spray.Rnw:426-429
+### code chunk number 20: spray.Rnw:427-430
 ###################################################
 state <- initial
 for(i in 1:100){state <- timestep(state, kernel, traps)}
-sum(value(state))
+sum(coeffs(state))
 
 
 ###################################################
@@ -203,7 +203,7 @@ constant((1 + knight(4))^6, drop=TRUE)
 
 
 ###################################################
-### code chunk number 26: spray.Rnw:565-569
+### code chunk number 26: spray.Rnw:566-570
 ###################################################
 a <- diag(26)
 options(sprayvars = letters)
