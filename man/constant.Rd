@@ -1,10 +1,15 @@
 \name{constant}
 \alias{constant}
+\alias{is.constant}
+\alias{scalar}
+\alias{is.scalar}
 \alias{constant.spray}
 \alias{constant,spray-method}
 \alias{constant<-}
 \alias{constant<-.spray}
 \alias{constant<-,spray-method}
+\alias{drop}
+\alias{drop,spray-method}
 \title{
   Get or set the constant term of a spray object
 }
@@ -14,8 +19,10 @@ an index of all zeros.  These functions get or set the constant of a
 spray object.
 }
 \usage{
+is.constant(x)
 constant(x,drop=FALSE)
 constant(x) <- value
+drop(x)
 }
 \arguments{
   \item{x}{Object of class spray}
@@ -31,7 +38,18 @@ constant(x) <- value
 Robin K. S. Hankin
 }
 \note{
-The behaviour of \code{drop} (sort of) matches that of the spray extractor method.
+
+The behaviour of the \code{drop} argument (sort of) matches that of the
+spray extractor method.  Function \code{drop()} returns the elements of
+the coefficients.
+
+Function \code{constant()} ensures that zero spray objects retain the
+argument's arity.
+
+It might have been better to call \code{is.constant()}
+\code{is.scalar()}, for consistency with the \code{stokes} and
+\code{clifford} packages.  But this is not clear.
+
 }
 \seealso{
 \code{\link{Extract}}
@@ -45,6 +63,7 @@ constant(S) <- 33
 
 S
 
+drop(constant(S,drop=FALSE))
 }
 
 \keyword{symbolmath}

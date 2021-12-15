@@ -10,6 +10,7 @@ import(mathjaxr)
 importFrom(disordR,disord)
 importFrom(disordR,elements)
 importFrom(disordR,hash)
+importFrom(disordR,hashcal)
 importFrom(disordR,is.disord)
 importFrom(disordR,consistent)
 
@@ -36,4 +37,5 @@ S3method(pmax,default)
 S3method(pmin,default)
 S3method(constant,spray)
 S3method("constant<-",spray)
+S3method("as.id",spray)
 

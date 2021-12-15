@@ -47,7 +47,13 @@ setClass("spray",
   }
 }
  
-`is.zero` <- is.empty
+`is.zero` <- function(x){
+    if(is.spray(x)){
+        return(is.empty(x))
+    } else {
+        return(x==0)
+    }
+}
 
 `spray` <- function(M,x,addrepeats=FALSE){
     if(is.vector(M)){
@@ -70,13 +76,16 @@ setClass("spray",
 `index` <- function(S){S[[1]]}    # these two functions are the only
 
 `coeffs` <- function(S){UseMethod("coeffs")}
-`coeffs.spray` <- function(S){disord(S[[2]])}    # 'accessor' functions in the package
+`coeffs.spray` <- function(S){disord(S[[2]],h=hashcal(S))}    # 'accessor' functions in the package
 
 `coeffs<-` <- function(S,value){UseMethod("coeffs<-")}
 `coeffs<-.spray` <- function(S,value){
    jj <- coeffs(S)
    if(is.disord(value)){
-     stopifnot(consistent(coeffs(S),value))
+
+     stopifnot(consistent(jj,value))
+     if((!identical(hash(jj),hash(value))) & (length(value)>1)){stop("length > 1")}
+
      jj <- value
    } else {
      jj[] <- value  # the meat
@@ -208,7 +217,17 @@ setGeneric("deriv")
 
 `constant` <- function(x,drop=FALSE){UseMethod("constant")}
 `constant.spray` <- function(x,drop=FALSE){ # returns 'the constant (term) of x'
-  x[t(rep(0,arity(x))),drop=drop]
+    M <- t(rep(0,arity(x)))
+    out <- x[M,drop=TRUE]
+    if(drop){
+        return(out)
+    } else { # drop = FALSE
+        if(out==0){
+            return(spraymaker(spray(M, 0),arity=arity(x)))
+        } else {
+            return(spray(M,out))
+        }
+    }
 }
 
 `constant<-` <- function(x, value){UseMethod("constant<-")}
@@ -231,10 +250,13 @@ setGeneric("deriv")
   return(spray(t(rep(0,d))))
 }
 
+`as.id` <- function(S){UseMethod("as.id")}
+`as.id.spray` <- function(S){spray(t(rep(0,arity(S))))}
+
 `ooom` <- function(S,n){
-  out <- one(S)
+  out <- as.id(S)
   for(i in seq_len(n)){
-    out <- 1  + S*out
+    out <- 1 + S*out
   }
   return(out)
 }
@@ -245,7 +267,12 @@ setGeneric("deriv")
     } else {
         jj <-
             data.frame(index(S),symbol= " = ", val=round(coeffs(S),getOption("digits")))
-        colnames(jj) <- c(rep(" ",arity(S)+1),'val')
+        mdc <-getOption("sprayvars")
+        if(is.null(mdc)){
+            colnames(jj) <- c(rep(" ",arity(S)+1),'val')
+        } else {
+            colnames(jj) <- c(mdc[seq_len(arity(S))],' ','val')
+        }
         print(jj,row.names=FALSE)
     }
     return(invisible(S))
@@ -277,7 +304,7 @@ setGeneric("deriv")
   } else {
     string <- constant(S,drop=TRUE)
   }
-  
+
   ind <- index(S)
   val <- elements(coeffs(S))
 
@@ -324,7 +351,6 @@ setGeneric("deriv")
             }
         }
         string <- paste(string, term, sep="")
-
       }  # row of index loop closes
     
   string <- paste(string,'\n',sep="")
@@ -371,7 +397,7 @@ setGeneric("deriv")
   return(spraymaker(spray_asum_exclude(index(S),coeffs(S),dims)))
 }
 
-`subs` <- function(S,dims,x){
+`subs` <- function(S,dims,x,drop=TRUE){
 
   dims <- process_dimensions(S,dims)
 
@@ -379,7 +405,9 @@ setGeneric("deriv")
   b <- index(S)[, dims,drop=FALSE]
   
   jj <- apply(sweep(b,2,x,function(x,y){y^x}),1,prod)* elements(coeffs(S))
-  spray(a, jj, addrepeats=TRUE)
+  out <- spray(a, jj, addrepeats=TRUE)
+  if(drop){out <- drop(out)}
+  return(out)
 }
 
 `deriv.spray` <- function(expr, i, derivative=1, ...){
@@ -505,5 +533,15 @@ setMethod("zapsmall","ANY",function(x,digits){
    }
 }
 
+`is.constant` <- function(x){is.zero(x) || all(index(x)==0)}
 
-
+setGeneric("drop")
+setMethod("drop","spray", function(x){
+    if(is.zero(x)){
+        return(0)
+    } else if(is.constant(x)){
+        return(elements(coeffs(x)))
+    } else {
+        return(x)
+    }
+})
