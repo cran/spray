@@ -109,32 +109,47 @@ subs(S5, 2, 5)
 
 
 ###################################################
-### code chunk number 14: spray.Rnw:339-340
+### code chunk number 14: spray.Rnw:347-348
 ###################################################
 aderiv((xyz(3) + linear(1:3))^3, 1:3)
 
 
 ###################################################
-### code chunk number 15: spray.Rnw:382-384
+### code chunk number 15: spray.Rnw:357-360
+###################################################
+set.seed(0)
+(A <- rspray())
+coeffs(A)
+
+
+###################################################
+### code chunk number 16: spray.Rnw:369-371
+###################################################
+coeffs(A) <- coeffs(A) %% 3
+A
+
+
+###################################################
+### code chunk number 17: spray.Rnw:415-417
 ###################################################
 d <- 2
 kernel <- spray(rbind(0, diag(d), -diag(d)))/(1 + 2*d)
 
 
 ###################################################
-### code chunk number 16: spray.Rnw:390-391
+### code chunk number 18: spray.Rnw:423-424
 ###################################################
 initial <- spray(rep(10, d))
 
 
 ###################################################
-### code chunk number 17: spray.Rnw:397-398
+### code chunk number 19: spray.Rnw:430-431
 ###################################################
 t14 <- initial * kernel^14
 
 
 ###################################################
-### code chunk number 18: spray.Rnw:404-407
+### code chunk number 20: spray.Rnw:437-440
 ###################################################
 
 traps <- matrix(c(2, 3, 3, 5), 2, 2)
@@ -142,7 +157,7 @@ n <- 17
 
 
 ###################################################
-### code chunk number 19: spray.Rnw:412-418
+### code chunk number 21: spray.Rnw:445-451
 ###################################################
 timestep <- function(state, kernel, traps){
   state <- state * kernel
@@ -153,7 +168,7 @@ timestep <- function(state, kernel, traps){
 
 
 ###################################################
-### code chunk number 20: spray.Rnw:427-430
+### code chunk number 22: spray.Rnw:460-463
 ###################################################
 state <- initial
 for(i in 1:100){state <- timestep(state, kernel, traps)}
@@ -161,7 +176,7 @@ sum(coeffs(state))
 
 
 ###################################################
-### code chunk number 21: knight_generating_function
+### code chunk number 23: knight_generating_function
 ###################################################
 chess_knight <- 
   spray(matrix(
@@ -174,36 +189,37 @@ chess_knight
 
 
 ###################################################
-### code chunk number 22: knight_six_moves
+### code chunk number 24: knight_six_moves
 ###################################################
 constant(chess_knight^6, drop = TRUE)
 
 
 ###################################################
-### code chunk number 23: define.d.dimensional.knight
+### code chunk number 25: define.d.dimensional.knight
 ###################################################
 knight <- function(d){
   n <- d * (d - 1)
   out <- matrix(0, n, d)
-  out[cbind(rep(seq_len(n), each=2), c(t(which(diag(d)==0, arr.ind=TRUE))))] <- seq_len(2)
+  jj <- cbind(rep(seq_len(n), each=2), c(t(which(diag(d)==0, arr.ind=TRUE))))
+  out[jj] <- seq_len(2)
   spray(rbind(out, -out, `[<-`(out, out==1, -1),`[<-`(out, out==2, -2)))
 }
 
 
 ###################################################
-### code chunk number 24: dnightmoves
+### code chunk number 26: dnightmoves
 ###################################################
 constant(knight(4)^6, drop = TRUE)
 
 
 ###################################################
-### code chunk number 25: dnightmoves_can_wait
+### code chunk number 27: dnightmoves_can_wait
 ###################################################
 constant((1 + knight(4))^6, drop=TRUE)
 
 
 ###################################################
-### code chunk number 26: spray.Rnw:566-570
+### code chunk number 28: spray.Rnw:600-604
 ###################################################
 a <- diag(26)
 options(sprayvars = letters)

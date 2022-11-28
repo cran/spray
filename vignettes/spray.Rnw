@@ -5,6 +5,7 @@
 \usepackage{amsfonts}
 \usepackage{wasysym}
 \usepackage{amssymb}
+\usepackage{wrapfig}
 
 %\title{Programmers' Niche: Efficient Multivariate polynomials in \R}
 %\subtitle{The \pkg{spray} package}
@@ -20,7 +21,6 @@
 \Plaintitle{Sparse arrays and multivariate polynomials in R}
 \Shorttitle{Sparse arrays and multivariate polynomials in \proglang{R}}
 
-%% an abstract and keywords
 \Abstract{In this short article I introduce the \pkg{spray} package,
   which provides some functionality for handling sparse arrays.  The
   package uses the~\proglang{C++} Standard Template Library's
@@ -28,7 +28,11 @@
   elements.  One natural application for sparse arrays is multivariate
   polynomials and I give two examples of the package in use, one drawn
   from the fields of random walks on lattices and one from the field
-  of recreational combinatorics.}
+  of recreational combinatorics.
+
+  To cite the \pkg{spray} package, use \citet{hankin2022_spray}.
+
+}
 \Keywords{Multivariate polynomials, \proglang{R}, sparse arrays}
 \Plainkeywords{Multivariate polynomials, R}
 
@@ -68,10 +72,14 @@ options(prompt = "R> ", continue = "+  ", width = 70, useFancyQuotes = FALSE)
 \SweaveOpts{}
 \begin{document}
 
-\hfill\includegraphics[width=1in]{\Sexpr{system.file("help/figures/spray.png",package="spray")}}
-
 \section{Introduction}
 
+\setlength{\intextsep}{0pt}
+\begin{wrapfigure}{r}{0.2\textwidth}
+\begin{center}
+\includegraphics[width=1in]{\Sexpr{system.file("help/figures/spray.png",package="spray")}}
+\end{center}
+\end{wrapfigure}
 The \pkg{multipol} package~\citep{hankin2008} furnishes the
 \proglang{R} programming language with functionality for multivariate
 polynomials.  However, the \pkg{multipol} package was noted as being
@@ -109,8 +117,8 @@ variables.  As~\citeauthor{kahle2013} points out, naming the variables
 allows a richer and more natural suite of functionality;
 straightforward \pkg{mpoly} idiom is somewhat strained in \pkg{spray}.
 
-(The \code{mvp} package~\citep{hankin2019} is now available; this uses
-a more powerful concept of sparsity).
+(The \code{mvp} package~\citep{hankin2022_mvp} is now available; this
+uses a more powerful concept of sparsity).
 
 
 \section{Sparse arrays}
@@ -180,7 +188,8 @@ requirement for indices to be positive: Element~\code{[6,-7,8]} is new
 (with value~17).  Even though the representation of the spray object
 does not preserve the order of the index rows in the argument, a
 particular index row is associated unambiguously with a unique numeric
-value.
+value.  The package uses \pkg{disordR} discipline, discussed below in
+section~\ref{disord}.
 
 \section{The spray package and multivariate polynomials}
 
@@ -227,10 +236,9 @@ S3
 
 \noindent It is natural to interpret the rows of the index matrix as
 powers of different variables of a multivariate polynomial, and the
-values as being the coefficients.
-
-This is realized in the package using the \code{polyform} option,
-which if set to \code{TRUE}, modifies the print method:
+values as being the coefficients.  This is realized in the package
+using the \code{polyform} option, which if set to \code{TRUE},
+modifies the print method:
 
 <<show_a_multivariate_polynomial>>=
 options(polyform = TRUE)
@@ -247,7 +255,7 @@ definitions as multivariate polynomial multiplication and addition:
 S1 + S2
 S1 * S2
 S1^2
-@ 
+@
 
 It is possible to introduce an element of symbolic calculation,
 exhibiting familiar algebraic identities.  Consider the \code{lone()}
@@ -340,6 +348,31 @@ This would be
 aderiv((xyz(3) + linear(1:3))^3, 1:3)
 @ 
 
+\section{Manipulation of coefficients}\label{disord}
+
+The \pkg{spray} package uses \pkg{disordR}
+discipline~\citep{hankin2022_disordR} for manipulation of the
+coefficients.  Thus:
+
+<<>>=
+set.seed(0)
+(A <- rspray())
+coeffs(A)
+@ 
+
+We see above that the coefficients of object \code{A} are not an
+ordinary \proglang{R} vector but a \code{disord} object.  Because the
+coefficients are stored in an implementation-specific order, we cannot
+access or manipulate \code{coeffs(a)[2]}, for example.  But some
+operations are allowed; we may consider the coefficients modulo 3:
+
+<<>>=
+coeffs(A) <- coeffs(A) %% 3
+A
+@ 
+
+A detailed motivation and use-case for \pkg{spray} is provided
+by~\citet{hankin2022_disordR}.
 
 \section{The package in use: some examples}
 
@@ -487,14 +520,15 @@ constant(chess_knight^6, drop = TRUE)
 
 (function \code{constant()} extracts the coefficient corresponding to
 zero power).  One natural generalization would be to arbitrary
-dimensions.  A d-dimensional knight moves two squares in one
+dimensions.  A $d$-dimensional knight moves two squares in one
 direction, followed by one square in another direction:
 
 <<define.d.dimensional.knight>>=
 knight <- function(d){
   n <- d * (d - 1)
   out <- matrix(0, n, d)
-  out[cbind(rep(seq_len(n), each=2), c(t(which(diag(d)==0, arr.ind=TRUE))))] <- seq_len(2)
+  jj <- cbind(rep(seq_len(n), each=2), c(t(which(diag(d)==0, arr.ind=TRUE))))
+  out[jj] <- seq_len(2)
   spray(rbind(out, -out, `[<-`(out, out==1, -1),`[<-`(out, out==2, -2)))
 }
 @ 
@@ -575,7 +609,7 @@ of sparseness which \pkg{mpoly} takes advantage of and \code{spray}
 does not.  Further work might include the development of name-based
 multivariate polynomials using concepts from \proglang{STL} to provide
 the best of both worlds (and indeed the \pkg{mvp}
-package~\citep{hankin2019} does just this, and more).
+package~\citep{hankin2022_mvp} does just this, and more).
 
 \bibliography{spray}
 \newpage
@@ -601,7 +635,9 @@ case of sparse arrays, this is not an issue because the nonzero
 entries do not possess a natural order, unlike dense arrays in which
 lexicographic ordering is used.  For multivariate polynomials, the
 order of storage is not important algebraically because addition is
-commutative and associative.
+commutative and associative.  These issues are accommodated using
+\pkg{disordR} discipline which forbids implementation-specific
+idiom~\citep{hankin2022_disordR}.
 
 \subsection*{Compile-time options}
 
