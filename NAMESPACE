@@ -21,6 +21,8 @@ export(pmax)
 export(pmin)
 export(zapsmall)
 export(summary)
+export(is.zero)
+
 
 S3method("[", spray)
 S3method("[<-", spray)
@@ -43,3 +45,4 @@ S3method("as.id",spray)
 S3method("summary",spray)
 S3method("print",summary.spray)
 S3method("length",spray)
+S3method("as.character",spray)

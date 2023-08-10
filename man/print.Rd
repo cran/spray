@@ -13,37 +13,36 @@ or multivariate polynomial form
 \usage{
 \method{print}{spray}(x, ...)
 print_spray_matrixform(S)
-print_spray_polyform(S)
+print_spray_polyform(S,give=FALSE)
 }
 \arguments{
   \item{x,S}{spray object}
-  \item{...}{Further arguments (currently ignored)}
+  \item{give}{Boolean, with default \code{FALSE} meaning to print the
+    value of \code{S}, and \code{TRUE} meaning to return a string
+    (without nice formatting); used in \code{as.character.spray()}}
+    \item{...}{Further arguments (currently ignored)}
 }
 \details{
 
  The print method, \code{print.spray()}, dispatches to helper functions
-  \code{print_spray_matrixform()} and \code{print_spray_polyform()}
-  depending on the value of option \code{polyform}; see the examples
-  section.
+ \code{print_spray_matrixform()} and \code{print_spray_polyform()}
+ depending on the value of option \code{polyform}; see the examples
+ section.
 
-  Option \code{sprayvars} is a character vector with entries
-  corresponding to the variable names for printing.  The
-  \code{sprayvars} option has no algebraic significance: all it does is
-  affect the print method.
+ Option \code{sprayvars} is a character vector with entries
+ corresponding to the variable names for printing.  The \code{sprayvars}
+ option has no algebraic significance: all it does is affect the print
+ method.
 
-  Note that printing a spray object (in either matrix form or polynomial
-  form) generally takes much longer than calculating it.
+ Note that printing a spray object (in either matrix form or polynomial
+ form) generally takes much longer than calculating it.
+
 }
-\value{
-Returns its argument invisibly.
-}
-\author{
-Robin K. S. Hankin
-}
+\value{Returns its argument invisibly.}
+\author{Robin K. S. Hankin}
 \note{
   There are a couple of hard-wired symbols for multiplication and
   equality which are defined near the top of the helper functions.
-  
 }
 \examples{
 
@@ -64,8 +63,6 @@ spray(a)
 ## Following example from mpoly:
 a[1 + cbind(0:25, 1:26) \%\% 26] <- 2
 spray(a)
-
-
 
 }
 \keyword{symbolmath}
