@@ -89,7 +89,7 @@ setClass("spray",
      if((!identical(hash(jj),hash(value))) & (length(value)>1)){stop("length > 1")}
      jj <- value
    } else {
-     stopifnot(length(value) == 1)
+     stopifnot(disordR::allsame(value))
      jj[] <- value  # the meat
    }
   spray(index(S),jj)
@@ -162,6 +162,8 @@ setGeneric("deriv")
         M <- first
     } else if(is.spray(first)){
         M <- index(first)
+    } else if(is.disord(first)){
+        return(spray_extract_disord(S,first))
     } else {
         M <- as.matrix(expand.grid(dots))
     }
@@ -194,6 +196,8 @@ setGeneric("deriv")
         M <- index
     } else if(is.spray(index)){
         M <- spray::index(index)
+    } else if(is.disord(index)){
+        return(spray_replace_disord(S,index,value))
     } else {
         M <- as.matrix(expand.grid(c(list(index), list(...))))
     }
@@ -516,7 +520,7 @@ setGeneric("deriv")
 `length.spray` <- function(x){nterms(x)}
 
 setGeneric("zapsmall")
-setMethod("zapsmall","spray",function(x,digits){
+setMethod("zapsmall","spray",function(x,digits=getOption("digits")){
     zap(x,digits=digits)
 })
 
@@ -580,4 +584,14 @@ setMethod("drop","spray", function(x){
         out <- disord(strsplit(out," ")[[1]],h=hashcal(x))
     }
     return(out)
+}
+
+`spray_extract_disord` <- function(S,first){
+    coeffs(S)[!first] <- 0
+    return(S)
+}
+
+`spray_replace_disord` <- function(S,index,value){
+    coeffs(S)[index] <- value
+    return(S)
 }
