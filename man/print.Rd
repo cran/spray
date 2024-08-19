@@ -1,6 +1,7 @@
 \name{print.spray}
 \alias{print.spray}
 \alias{sprayvars}
+\alias{printedvalue}
 \alias{print_spray_matrixform}
 \alias{print_spray_polyform}
 \title{
@@ -14,13 +15,15 @@ or multivariate polynomial form
 \method{print}{spray}(x, ...)
 print_spray_matrixform(S)
 print_spray_polyform(S,give=FALSE)
+printedvalue(v)
 }
 \arguments{
   \item{x,S}{spray object}
   \item{give}{Boolean, with default \code{FALSE} meaning to print the
     value of \code{S}, and \code{TRUE} meaning to return a string
     (without nice formatting); used in \code{as.character.spray()}}
-    \item{...}{Further arguments (currently ignored)}
+  \item{v}{Numeric vector}
+  \item{...}{Further arguments (currently ignored)}
 }
 \details{
 
@@ -34,6 +37,10 @@ print_spray_polyform(S,give=FALSE)
  option has no algebraic significance: all it does is affect the print
  method.
 
+ Function \code{printedvalue()} is a low-level helper function that
+ takes a numeric argument and returns the value as printed (thus
+ respecting options \code{scipen} and \code{digits}).
+
  Note that printing a spray object (in either matrix form or polynomial
  form) generally takes much longer than calculating it.
 
@@ -43,6 +50,11 @@ print_spray_polyform(S,give=FALSE)
 \note{
   There are a couple of hard-wired symbols for multiplication and
   equality which are defined near the top of the helper functions.
+
+  There are no checks for option \code{sprayvars} being sensible.  For
+  example, repeated entries, or entries with zero length, are acceptable
+  but the output might be confusing or uninformative.
+
 }
 \examples{
 

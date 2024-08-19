@@ -31,3 +31,11 @@
 
 - consistentification of zero objects
 
+
+# spray 1.0-26
+
+- bugfixes
+- code of conduct
+- contributing guide
+- improvement to print method
+- no dependence on mathjax package
